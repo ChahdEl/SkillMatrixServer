@@ -16,15 +16,14 @@ namespace Skill_Matrix_Serv.Data.Models
         }
 
          [HttpGet("Get_verify")]
-        public JsonResult VerifyTechnicianCode([FromQuery] string code)
+        public JsonResult VerifyTechnicianCode([FromQuery] string code, string pwd)
         {
-            System.Diagnostics.Debug.WriteLine($"Received code: {code}");
-
             string query = @"
         SELECT COUNT(*) 
         FROM [Test_DB].[dbo].[Technician]
         WHERE [NetID] = @Code 
-          AND [IsActive] = 1;
+          AND [IsActive] = 1
+          AND [mot_passe]=@pwd;
     ";
 
             string? sqlDataSource = _config.GetConnectionString("Test_DB");
@@ -38,6 +37,7 @@ namespace Skill_Matrix_Serv.Data.Models
                     using (SqlCommand myCommand = new SqlCommand(query, myCon))
                     {
                         myCommand.Parameters.AddWithValue("@Code", code);
+                        myCommand.Parameters.AddWithValue("@owd", pwd);
                         var result = myCommand.ExecuteScalar();
                         matchCount = result != null ? (int)result : 0;
 

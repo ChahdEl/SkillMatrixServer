@@ -457,3 +457,4 @@ C:\Users\FZ2BEB\OneDrive - NEXTEER AUTOMOTIVE\Desktop\Skill Matrix Serv\obj\Debu
 C:\Users\FZ2BEB\OneDrive - NEXTEER AUTOMOTIVE\Desktop\Skill Matrix Serv\obj\Debug\net8.0\Skill Matrix Serv.pdb
 C:\Users\FZ2BEB\OneDrive - NEXTEER AUTOMOTIVE\Desktop\Skill Matrix Serv\obj\Debug\net8.0\Skill Matrix Serv.genruntimeconfig.cache
 C:\Users\FZ2BEB\OneDrive - NEXTEER AUTOMOTIVE\Desktop\Skill Matrix Serv\obj\Debug\net8.0\ref\Skill Matrix Serv.dll
+C:\Users\FZ2BEB\OneDrive - NEXTEER AUTOMOTIVE\Desktop\Skill Matrix Serv\obj\Debug\net8.0\Skill Matrix Serv.sourcelink.json

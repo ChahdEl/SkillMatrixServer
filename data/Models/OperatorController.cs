@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Skill_Matrix_Serv.Data.Models
 {
+    
     [ApiController]
     public class OperatorController : ControllerBase
     {
@@ -240,54 +241,41 @@ namespace Skill_Matrix_Serv.Data.Models
 
 
 
-        [HttpPost("Add_New_Operator")]
-
-        public JsonResult Add_New_Operator(int Matricule,string Name,string Project,string CurrentStation,string CurrentLevel,string teamLeader)
+       [HttpPost("Add_New_Operator")]
+        public JsonResult Add_New_Operator(int Matricule, string Name, string Project, string CurrentStation, string CurrentLevel, string teamLeader)
         {
-            
-            DataTable table=new DataTable();
-            string? SqlDataSource = _config.GetConnectionString("Test_DB");
-            SqlDataReader myReader;
-            using(SqlConnection myCon=new SqlConnection(SqlDataSource))
-            {
-                
-            try
-                {
-                myCon.Open();
-                
-                }
-            catch (Exception er) {
-                System.Diagnostics.Debug.WriteLine(er.Message);
-                }
-
-                using(SqlCommand myCommand=new SqlCommand((@"
+            string query = @"
                 INSERT INTO [dbo].[Operators]
-                            ([Matricule]
-                            ,[Name]
-                            ,[Project]
-                            ,[CurrentStation]
-                            ,[CurrentLevel]
-                            ,[TeamLeader]
-                            ,[IsActive])
-                 VALUES
-                    (@matricule,@Name,@Project,@currentStation,@CurrentLevel,@TeamLeader,1);
-                "),myCon))
+                ([Matricule], [Name], [Project], [CurrentStation], [CurrentLevel], [TeamLeader], [IsActive])
+                VALUES (@matricule, @Name, @Project, @currentStation, @CurrentLevel, @TeamLeader, 1);
+            ";
+
+            string? SqlDataSource = _config.GetConnectionString("Test_DB");
+
+            using (SqlConnection myCon = new SqlConnection(SqlDataSource))
+            {
+                try
                 {
-                    myCommand.Parameters.AddWithValue("@matricule",Matricule);
-                    myCommand.Parameters.AddWithValue("@Name",Name);
-                    myCommand.Parameters.AddWithValue("@Project",Project);
-                    myCommand.Parameters.AddWithValue("@currentStation",CurrentStation);
-                    myCommand.Parameters.AddWithValue("@CurrentLevel",CurrentLevel);
-                    myCommand.Parameters.AddWithValue("@TeamLeader",teamLeader);
-                    myReader=myCommand.ExecuteReader();
-                    table.Load(myReader);
+                    myCon.Open();
+                    using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                    {
+                        myCommand.Parameters.AddWithValue("@matricule", Matricule);
+                        myCommand.Parameters.AddWithValue("@Name", Name);
+                        myCommand.Parameters.AddWithValue("@Project", Project);
+                        myCommand.Parameters.AddWithValue("@currentStation", CurrentStation);
+                        myCommand.Parameters.AddWithValue("@CurrentLevel", CurrentLevel);
+                        myCommand.Parameters.AddWithValue("@TeamLeader", teamLeader);
 
+                        int result = myCommand.ExecuteNonQuery(); // ✅ utiliser ExecuteNonQuery pour les INSERT
+                        return new JsonResult("Operator added successfully. Rows affected: " + result);
+                    }
                 }
-
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ INSERT error: " + ex.Message);
+                    return new JsonResult("Internal Server Error: " + ex.Message);
+                }
             }
-
-            return new JsonResult("Record added successfully !");
-
         }
 
 
@@ -346,7 +334,7 @@ namespace Skill_Matrix_Serv.Data.Models
 [HttpPut("Update_Operator_By_Matricule")]
 public JsonResult Update_Operator_By_Matricule(int Matricule, string Name, string Project, string CurrentStation, string CurrentLevel, string TeamLeader)
 {
-    string query = @"
+    string updateOperatorQuery = @"
         UPDATE [dbo].[Operators]
         SET 
             Name = @Name,
@@ -357,50 +345,52 @@ public JsonResult Update_Operator_By_Matricule(int Matricule, string Name, strin
         WHERE 
             Matricule = @Matricule";
 
-    DataTable table = new DataTable();
-    string? SqlDataSource = _config.GetConnectionString("Test_DB");
-    SqlDataReader myReader;
+    string resetScoresQuery = @"
+        UPDATE [dbo].[Answers]
+        SET 
+            ANS1 = 0, ANS2 = 0, ANS3 = 0, ANS4 = 0, ANS5 = 0, ANS6 = 0, ANS7 = 0, ANS8 = 0,
+            ANS9 = 0, ANS10 = 0, ANS11 = 0, ANS12 = 0, ANS13 = 0, ANS14 = 0, ANS15 = 0, ANS16 = 0,
+            ANS17 = 0, ANS18 = 0, ANS19 = 0, ANS20 = 0,
+            Score = 0
+        WHERE OperatorMat = @Matricule AND LVLID >= @CurrentLevel";
 
-    using(SqlConnection myCon = new SqlConnection(SqlDataSource))
+    string? SqlDataSource = _config.GetConnectionString("Test_DB");
+
+    using (SqlConnection myCon = new SqlConnection(SqlDataSource))
     {
         try
         {
             myCon.Open();
-        }
-        catch (Exception er) 
-        {
-            System.Diagnostics.Debug.WriteLine(er.Message);
-            return new JsonResult("Failed to connect to database.");
-        }
 
-        using(SqlCommand myCommand = new SqlCommand(query, myCon))
-        {
-            myCommand.Parameters.AddWithValue("@Matricule", Matricule);
-            myCommand.Parameters.AddWithValue("@Name", Name);
-            myCommand.Parameters.AddWithValue("@Project", Project);
-            myCommand.Parameters.AddWithValue("@CurrentStation", CurrentStation);
-            myCommand.Parameters.AddWithValue("@CurrentLevel", CurrentLevel);
-            myCommand.Parameters.AddWithValue("@TeamLeader", TeamLeader);
+            using (SqlCommand cmd1 = new SqlCommand(updateOperatorQuery, myCon))
+            {
+                cmd1.Parameters.AddWithValue("@Matricule", Matricule);
+                cmd1.Parameters.AddWithValue("@Name", Name);
+                cmd1.Parameters.AddWithValue("@Project", Project);
+                cmd1.Parameters.AddWithValue("@CurrentStation", CurrentStation);
+                cmd1.Parameters.AddWithValue("@CurrentLevel", CurrentLevel);
+                cmd1.Parameters.AddWithValue("@TeamLeader", TeamLeader);
 
-            try
-            {
-                myReader = myCommand.ExecuteReader();
-                table.Load(myReader);
-                myReader.Close();
+                cmd1.ExecuteNonQuery();
             }
-            catch (Exception ex)
+
+            using (SqlCommand cmd2 = new SqlCommand(resetScoresQuery, myCon))
             {
-                System.Diagnostics.Debug.WriteLine("Update Error: " + ex.Message);
-                return new JsonResult("Failed to update operator.");
+                cmd2.Parameters.AddWithValue("@Matricule", Matricule);
+                cmd2.Parameters.AddWithValue("@CurrentLevel", CurrentLevel);
+
+                cmd2.ExecuteNonQuery();
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("Erreur : " + ex.Message);
+            return new JsonResult("Erreur lors de la mise à jour.");
         }
     }
 
-    return new JsonResult("Record updated successfully!");
+    return new JsonResult("Opérateur mis à jour et scores réinitialisés !");
 }
-
-
-
 
 
 [HttpGet("Check_Levels_By_OperatorAndStation")]
@@ -436,15 +426,6 @@ public JsonResult Check_Levels_By_OperatorAndStation(int Matricule, string Stati
 
     return new JsonResult(levelCount > 0);
 }
-
-
-
-
-
-
-
-
-
 
 
 [HttpPut("Update_Level_Score_And_Answers")]
@@ -488,11 +469,6 @@ public IActionResult UpdateLevelScoreAndAnswers([FromBody] UpdateLevelRequest re
 
 
 
-
-
-
-
-
 [HttpPut("Update_Operator_Level")]
 public IActionResult UpdateOperatorLevel([FromBody] UpdateOperatorLevelRequest request)
 {
@@ -513,15 +489,6 @@ public IActionResult UpdateOperatorLevel([FromBody] UpdateOperatorLevelRequest r
         return rowsAffected > 0 ? new JsonResult("Operator level updated successfully") : BadRequest("Failed to update operator level");
     }
 }
-
-
-
-
-
-
-
-
-
 
 [HttpPut("Update_Operator_IsActive")]
 public IActionResult UpdateOperatorIsActive(int Matricule)

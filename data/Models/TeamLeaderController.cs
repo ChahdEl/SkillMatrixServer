@@ -161,5 +161,48 @@ namespace Skill_Matrix_Serv.Data.Models
 
         /*******************************************************************************************************************************************************************/
         /*******************************************************************************************************************************************************************/
+        [HttpPut("Update_Leader_By_Matricule")]
+public JsonResult Update_Leader_By_Matricule(int Matricule, string Name, string Project, string Zone, string Supervisor)
+{
+    string updateLeaderQuery = @"
+        UPDATE [dbo].[TeamLeaders]
+        SET 
+            [Name] = @Name,
+            [Project] = @Project,
+            [Zone] = @Zone,
+            [Supervisor] = @Supervisor
+        WHERE 
+            [Matricule] = @Matricule";
+
+    
+    string? SqlDataSource = _config.GetConnectionString("Test_DB");
+
+    using (SqlConnection myCon = new SqlConnection(SqlDataSource))
+    {
+                try
+                {
+                    myCon.Open();
+
+                    using (SqlCommand cmd1 = new SqlCommand(updateLeaderQuery, myCon))
+                    {
+                        cmd1.Parameters.AddWithValue("@Matricule", Matricule);
+                        cmd1.Parameters.AddWithValue("@Name", Name);
+                        cmd1.Parameters.AddWithValue("@Project", Project);
+                        cmd1.Parameters.AddWithValue("@Zone", Zone);
+                        cmd1.Parameters.AddWithValue("@Supervisor", Supervisor);
+
+                        cmd1.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Erreur : " + ex.Message);
+                    return new JsonResult("Erreur lors de la mise à jour.");
+                }
+    }
+
+    return new JsonResult("Opérateur mis à jour et scores réinitialisés !");
+}
+
     }
 }
