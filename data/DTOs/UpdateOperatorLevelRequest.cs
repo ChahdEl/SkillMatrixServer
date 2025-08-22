@@ -1,6 +1,5 @@
 public class UpdateOperatorLevelRequest
 {
-    public int matricule { get; set; }      // integer
-    public int newLevel { get; set; }          // integer
-     // boolean array (e.g., [true, false, true, ...])
+    public int matricule { get; set; }    
+    public int newLevel { get; set; }     
 }

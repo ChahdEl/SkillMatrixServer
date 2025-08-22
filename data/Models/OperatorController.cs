@@ -191,11 +191,6 @@ namespace Skill_Matrix_Serv.Data.Models
 
         }
 
-
-
-
-
-
         [HttpPost("SET_Operator")]
 
         public JsonResult SET_Operator(string NetID,int Matricule,string Name)
@@ -232,15 +227,6 @@ namespace Skill_Matrix_Serv.Data.Models
 
         }
 
-
-
-
-
-
-
-
-
-
        [HttpPost("Add_New_Operator")]
         public JsonResult Add_New_Operator(int Matricule, string Name, string Project, string CurrentStation, string CurrentLevel, string teamLeader)
         {
@@ -266,13 +252,13 @@ namespace Skill_Matrix_Serv.Data.Models
                         myCommand.Parameters.AddWithValue("@CurrentLevel", CurrentLevel);
                         myCommand.Parameters.AddWithValue("@TeamLeader", teamLeader);
 
-                        int result = myCommand.ExecuteNonQuery(); // ✅ utiliser ExecuteNonQuery pour les INSERT
+                        int result = myCommand.ExecuteNonQuery(); 
                         return new JsonResult("Operator added successfully. Rows affected: " + result);
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("❌ INSERT error: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine(" INSERT error: " + ex.Message);
                     return new JsonResult("Internal Server Error: " + ex.Message);
                 }
             }
@@ -455,7 +441,6 @@ public IActionResult UpdateLevelScoreAndAnswers([FromBody] UpdateLevelRequest re
         myCommand.Parameters.AddWithValue("@Score", request.Score);
         myCommand.Parameters.AddWithValue("@CurrentStation", request.CurrentStation);
 
-        // Add each answer (assuming answers array length is 20)
         for (int i = 0; i < request.Answers.Length; i++)
         {
             myCommand.Parameters.AddWithValue($"@ANS{i + 1}", request.Answers[i]);
@@ -530,10 +515,46 @@ public IActionResult UpdateOperatorIsActive(int Matricule)
 
 
 
+[HttpPut("Update_Operator_delete/{Matricule}")]
+public IActionResult UpdateOperatorDelete(int Matricule)
+{
+    string query = @"
+        UPDATE [dbo].[Operators]
+        SET IsActive = -1
+        WHERE Matricule = @Matricule";
+
+    DataTable table = new DataTable();
+    string? SqlDataSource = _config.GetConnectionString("Test_DB");
+    using (SqlConnection myCon = new SqlConnection(SqlDataSource))
+    {
+        try
+        {
+            myCon.Open();
+            using (SqlCommand myCommand = new SqlCommand(query, myCon))
+            {
+                myCommand.Parameters.AddWithValue("@Matricule", Matricule);
+                int rowsAffected = myCommand.ExecuteNonQuery();
+
+                if (rowsAffected > 0)
+                {
+                    return new JsonResult("Operator deleted successfully!");
+                }
+                else
+                {
+                    return new JsonResult("Operator not found or already inactive.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("Error updating IsActive status: " + ex.Message);
+            return new JsonResult("An error occurred while deactivating the operator.");
+        }
+    }
+}
 
 
-
-[HttpGet("GET_Disabled_Operators_By_TLNZ")]
+        [HttpGet("GET_Disabled_Operators_By_TLNZ")]
 public JsonResult GET_Disabled_Operators_By_TLNZ(string NetID)
 {
     string query = "SELECT * FROM [Test_DB].[dbo].[Operators] WHERE TeamLeader = @NetID AND IsActive = 0;";
@@ -563,7 +584,35 @@ public JsonResult GET_Disabled_Operators_By_TLNZ(string NetID)
     return new JsonResult(table);
 }
 
+ [HttpGet("GET_Quit_Operators_By_TLNZ")]
+public JsonResult GET_Quit_Operators_By_TLNZ(string NetID)
+{
+    string query = "SELECT * FROM [Test_DB].[dbo].[Operators] WHERE TeamLeader = @NetID AND IsActive = -1;";
+    DataTable table = new DataTable();
+    string? SqlDataSource = _config.GetConnectionString("Test_DB");
+    SqlDataReader myReader;
 
+    using (SqlConnection myCon = new SqlConnection(SqlDataSource))
+    {
+        try
+        {
+            myCon.Open();
+        }
+        catch (Exception er)
+        {
+            System.Diagnostics.Debug.WriteLine(er.Message);
+        }
+
+        using (SqlCommand myCommand = new SqlCommand(query, myCon))
+        {
+            myCommand.Parameters.AddWithValue("@NetID", NetID);
+            myReader = myCommand.ExecuteReader();
+            table.Load(myReader);
+        }
+    }
+
+    return new JsonResult(table);
+}
 
 
 

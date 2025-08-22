@@ -37,7 +37,7 @@ namespace Skill_Matrix_Serv.Data.Models
                     using (SqlCommand myCommand = new SqlCommand(query, myCon))
                     {
                         myCommand.Parameters.AddWithValue("@Code", code);
-                        myCommand.Parameters.AddWithValue("@owd", pwd);
+                        myCommand.Parameters.AddWithValue("@pwd", pwd);
                         var result = myCommand.ExecuteScalar();
                         matchCount = result != null ? (int)result : 0;
 
